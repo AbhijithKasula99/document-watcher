@@ -10,16 +10,20 @@ fi
 
 source "$CONFIG_FILE"
 
+log() {
+	if [ -z "$1" ]; then
+		echo "ERROR: log() requires a message"
+		return 1
+	fi
+	echo "$(date) $1" >> "$LOG_FILE"
+}
+
 APP_NAME="Document Watcher"
 
 
 echo "==================================="
 echo "$APP_NAME"
 echo "==================================="
-
-echo "Current User: $USER"
-echo "Current Time: $(date)"
-echo "WATCH_FOLDER: $WATCH_FOLDER"
 
 if [ ! -d "$WATCH_FOLDER" ]; then
     echo "ERROR: Watch folder does not exist."
@@ -31,6 +35,9 @@ if [ ! -d "$ARCHIVE_FOLDER" ]; then
 	exit 3
 fi
 
+echo "Current User: $USER"
+echo "Current Time: $(date)"
+echo "WATCH_FOLDER: $WATCH_FOLDER"
 
 PDF_COUNT=$(find "$WATCH_FOLDER" -name "*.pdf" | wc -l)
 echo "PDF Files: $PDF_COUNT"
@@ -46,12 +53,17 @@ echo "Files waiting: $FILE_COUNT"
 
 
 if [ "$FILE_COUNT" -gt 0 ]; then
-	mv "$WATCH_FOLDER"/* "$ARCHIVE_FOLDER"
-	echo "$(date) Watcher started" >> "$LOG_FILE"
-	echo "$(date) Folder verified" >> "$LOG_FILE"
-	echo "$(date) $FILE_COUNT files found" >> "$LOG_FILE"
-	echo "$(date) $FILE_COUNT files moved" >> "$LOG_FILE"
-	echo "$(date) Files processed successfully" >> "$LOG_FILE"
+	log "Watcher started"
+	log "Folder verified"
+	log "$FILE_COUNT files found"
+	if mv "$WATCH_FOLDER"/* "$ARCHIVE_FOLDER"; then
+		log "$FILE_COUNT files moved"
+		log "Files processed successfully"
+	else
+		log "Failed to move files"
+		echo "ERROR: Failed to move files"
+		exit 4
+	fi
 else
 	echo "No files in the folder"
 fi
