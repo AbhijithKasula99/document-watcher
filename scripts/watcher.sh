@@ -1,9 +1,17 @@
 #!/bin/bash
 
+CONFIG_FILE="$(dirname "$0")/../config/config.env"
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "ERROR: Configuration file not found."
+    echo "Expected: $CONFIG_FILE"
+    exit 1
+fi
+
+source "$CONFIG_FILE"
+
 APP_NAME="Document Watcher"
-WATCH_FOLDER="$HOME/doc-ops/incoming"
-ARCHIVE_FOLDER="$HOME/doc-ops/archive"
-LOG_FILE="$HOME/doc-ops/logs/watcher.log"
+
 
 echo "==================================="
 echo "$APP_NAME"
@@ -13,10 +21,14 @@ echo "Current User: $USER"
 echo "Current Time: $(date)"
 echo "WATCH_FOLDER: $WATCH_FOLDER"
 
-if [ -d "$WATCH_FOLDER" ]; then
-	echo "Incoming folder exists."
-else
-	echo "Incoming folder not found."
+if [ ! -d "$WATCH_FOLDER" ]; then
+    echo "ERROR: Watch folder does not exist."
+    exit 2
+fi
+
+if [ ! -d "$ARCHIVE_FOLDER" ]; then
+	echo "ERROR: Archive folder does not exist."
+	exit 3
 fi
 
 
