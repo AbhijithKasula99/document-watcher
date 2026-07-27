@@ -67,22 +67,28 @@ process_files() {
     fi
 }
 
+display_header() {
+	echo "==================================="
+	echo "$APP_NAME"
+	echo "==================================="
+}
+
+display_runtime_info() {
+	echo "Current User: $USER"
+	echo "Current Time: $(date)"
+	echo "WATCH_FOLDER: $WATCH_FOLDER"
+}
+
+
 # ===================================
 # Main Program
 # ===================================
 
 main() {
 
-	echo "==================================="
-	echo "$APP_NAME"
-	echo "==================================="
-
+	display_header
 	validate_environment
-
-	echo "Current User: $USER"
-	echo "Current Time: $(date)"
-	echo "WATCH_FOLDER: $WATCH_FOLDER"
-
+	display_runtime_info
 	count_files
 
 	echo "PDF Files: $PDF_COUNT"
@@ -94,3 +100,4 @@ main() {
 }
 
 main
+
