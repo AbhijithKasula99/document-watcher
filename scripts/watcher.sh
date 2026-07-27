@@ -71,21 +71,26 @@ process_files() {
 # Main Program
 # ===================================
 
-echo "==================================="
-echo "$APP_NAME"
-echo "==================================="
+main() {
 
-validate_environment
+	echo "==================================="
+	echo "$APP_NAME"
+	echo "==================================="
 
-echo "Current User: $USER"
-echo "Current Time: $(date)"
-echo "WATCH_FOLDER: $WATCH_FOLDER"
+	validate_environment
 
-count_files
+	echo "Current User: $USER"
+	echo "Current Time: $(date)"
+	echo "WATCH_FOLDER: $WATCH_FOLDER"
 
-echo "PDF Files: $PDF_COUNT"
-echo "PNG Files: $PNG_COUNT"
-echo "TXT Files: $TXT_COUNT"
-echo "Files waiting: $FILE_COUNT"
+	count_files
 
-process_files
+	echo "PDF Files: $PDF_COUNT"
+	echo "PNG Files: $PNG_COUNT"
+	echo "TXT Files: $TXT_COUNT"
+	echo "Files waiting: $FILE_COUNT"
+
+	process_files
+}
+
+main
