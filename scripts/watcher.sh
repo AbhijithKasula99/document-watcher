@@ -79,6 +79,12 @@ display_runtime_info() {
 	echo "WATCH_FOLDER: $WATCH_FOLDER"
 }
 
+display_statistics() {
+	echo "PDF Files: $PDF_COUNT"
+	echo "PNG Files: $PNG_COUNT"
+	echo "TXT Files: $TXT_COUNT"
+	echo "Files waiting: $FILE_COUNT"
+}
 
 # ===================================
 # Main Program
@@ -90,12 +96,7 @@ main() {
 	validate_environment
 	display_runtime_info
 	count_files
-
-	echo "PDF Files: $PDF_COUNT"
-	echo "PNG Files: $PNG_COUNT"
-	echo "TXT Files: $TXT_COUNT"
-	echo "Files waiting: $FILE_COUNT"
-
+	display_statistics
 	process_files
 }
 
