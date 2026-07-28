@@ -1,10 +1,22 @@
 #!/bin/bash
 
+
+# ===================================
+# Location retriever
+# ===================================
+
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+WATCH_FOLDER="$PROJECT_ROOT/incoming"
+ARCHIVE_FOLDER="$PROJECT_ROOT/archive"
+LOG_FILE="$PROJECT_ROOT/logs/watcher.log"
+
 # ===================================
 # Configuration
 # ===================================
 
-CONFIG_FILE="$(dirname "$0")/../config/config.env"
+CONFIG_FILE="$PROJECT_ROOT/config/config.env"
 
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "ERROR: Configuration file not found."
