@@ -21,12 +21,15 @@ APP_NAME="Document Watcher"
 # ===================================
 
 log() {
-    if [ -z "$1" ]; then
-        echo "ERROR: log() requires a message"
-        return 1
+    if [ $# -ne 2 ]; then
+	echo "ERROR: log() requires a level and a message"
+	return 1
     fi
 
-    echo "$(date) $1" >> "$LOG_FILE"
+    local level="$1"
+    local message="$2"
+
+    echo "$(date) [$level] $message" >> "$LOG_FILE"
 }
 
 validate_environment() {
@@ -50,15 +53,15 @@ count_files() {
 
 process_files() {
     if [ "$FILE_COUNT" -gt 0 ]; then
-        log "Watcher started"
-        log "Folder verified"
-        log "$FILE_COUNT files found"
+        log INFO "Watcher started"
+        log INFO "Folder verified"
+        log INFO "$FILE_COUNT files found"
 
         if mv "$WATCH_FOLDER"/* "$ARCHIVE_FOLDER"; then
-            log "$FILE_COUNT files moved"
-            log "Files processed successfully"
+            log INFO "$FILE_COUNT files moved"
+            log INFO "Files processed successfully"
         else
-            log "Failed to move files"
+            log ERROR "Failed to move files"
             echo "ERROR: Failed to move files"
             exit 4
         fi
