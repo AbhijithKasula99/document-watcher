@@ -1,8 +1,9 @@
 #!/bin/bash
 
+set -euo pipefail
 
 # ===================================
-# Location retriever
+# Project Paths
 # ===================================
 
 
