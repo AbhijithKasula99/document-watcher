@@ -6,9 +6,9 @@ set -euo pipefail
 # Project Paths
 # ===================================
 
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
 WATCH_FOLDER="$PROJECT_ROOT/incoming"
 ARCHIVE_FOLDER="$PROJECT_ROOT/archive"
 LOG_FILE="$PROJECT_ROOT/logs/watcher.log"
@@ -35,8 +35,8 @@ APP_NAME="Document Watcher"
 
 log() {
     if [ $# -ne 2 ]; then
-	echo "ERROR: log() requires a level and a message"
-	return 1
+        echo "ERROR: log() requires a level and a message"
+        return 1
     fi
 
     local level="$1"
@@ -65,41 +65,71 @@ count_files() {
 }
 
 process_files() {
+
+    SUCCESS_COUNT=0
+    FAILED_COUNT=0
+
     if [ "$FILE_COUNT" -gt 0 ]; then
         log INFO "Watcher started"
         log INFO "Folder verified"
         log INFO "$FILE_COUNT files found"
-
-        if mv "$WATCH_FOLDER"/* "$ARCHIVE_FOLDER"; then
-            log INFO "$FILE_COUNT files moved"
-            log INFO "Files processed successfully"
-        else
-            log ERROR "Failed to move files"
-            echo "ERROR: Failed to move files"
-            exit 4
-        fi
     else
-        echo "No files in the folder"
+        echo "No files in folder"
+        return 0
+    fi
+
+    for file in "$WATCH_FOLDER"/*; do
+        echo "Processing: $file"
+
+        if mv "$file" "$ARCHIVE_FOLDER"; then
+            ((SUCCESS_COUNT++))
+            log INFO "Moved $file"
+        else
+            ((FAILED_COUNT++))
+            log ERROR "Failed $file"
+        fi
+    done
+
+    # ===================================
+    # Processing Summary
+    # ===================================
+
+    log INFO "Run completed."
+    log INFO "Succeeded: $SUCCESS_COUNT"
+    log INFO "Failed: $FAILED_COUNT"
+
+    echo "==================================="
+    echo "Processing Summary"
+    echo "==================================="
+    echo "Succeeded : $SUCCESS_COUNT"
+    echo "Failed    : $FAILED_COUNT"
+
+    if [ "$FAILED_COUNT" -gt 0 ]; then
+        log ERROR "Processing failed"
+        return 1
+    else
+        log INFO "Processing successful"
+        return 0
     fi
 }
 
 display_header() {
-	echo "==================================="
-	echo "$APP_NAME"
-	echo "==================================="
+    echo "==================================="
+    echo "$APP_NAME"
+    echo "==================================="
 }
 
 display_runtime_info() {
-	echo "Current User: $USER"
-	echo "Current Time: $(date)"
-	echo "WATCH_FOLDER: $WATCH_FOLDER"
+    echo "Current User : $USER"
+    echo "Current Time : $(date)"
+    echo "Watch Folder : $WATCH_FOLDER"
 }
 
 display_statistics() {
-	echo "PDF Files: $PDF_COUNT"
-	echo "PNG Files: $PNG_COUNT"
-	echo "TXT Files: $TXT_COUNT"
-	echo "Files waiting: $FILE_COUNT"
+    echo "PDF Files     : $PDF_COUNT"
+    echo "PNG Files     : $PNG_COUNT"
+    echo "TXT Files     : $TXT_COUNT"
+    echo "Files Waiting : $FILE_COUNT"
 }
 
 # ===================================
@@ -108,13 +138,12 @@ display_statistics() {
 
 main() {
 
-	display_header
-	validate_environment
-	display_runtime_info
-	count_files
-	display_statistics
-	process_files
+    display_header
+    validate_environment
+    display_runtime_info
+    count_files
+    display_statistics
+    process_files
 }
 
 main
-
