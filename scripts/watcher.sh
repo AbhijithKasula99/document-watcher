@@ -33,6 +33,22 @@ APP_NAME="Document Watcher"
 # Functions
 # ===================================
 
+show_help() {
+    echo "Document Watcher"
+    echo
+    echo "Usage:"
+    echo "    ./watcher.sh [OPTIONS]"
+    echo
+    echo "Options:"
+    echo "    -h    Show help"
+    echo "    -v    Show version"
+}
+
+show_version () {
+	echo "Document Watcher v1.0.0"
+}
+
+
 log() {
     if [ $# -ne 2 ]; then
         echo "ERROR: log() requires a level and a message"
@@ -131,6 +147,31 @@ display_statistics() {
     echo "TXT Files     : $TXT_COUNT"
     echo "Files Waiting : $FILE_COUNT"
 }
+
+
+# ===================================
+# Command Line Options
+# ===================================
+
+while getopts "hv" option; do
+    case "$option" in
+        h)
+            show_help
+            exit 0
+            ;;
+        v)
+            show_version
+            exit 0
+            ;;
+        \?)
+            echo "ERROR: Unknown option"
+            exit 1
+            ;;
+    esac
+done
+
+
+
 
 # ===================================
 # Main Program
