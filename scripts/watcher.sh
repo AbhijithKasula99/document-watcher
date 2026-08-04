@@ -136,7 +136,7 @@ display_header() {
 }
 
 display_runtime_info() {
-    echo "Current User : $USER"
+    echo "Current User : $(whoami)"
     echo "Current Time : $(date)"
     echo "Watch Folder : $WATCH_FOLDER"
 }
