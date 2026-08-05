@@ -21,3 +21,6 @@ jobs:
 
       - name: Build Docker Image
         run: docker build -t document-watcher .
+
+      - name: Run container
+        run: docker run --rm document-watcher
