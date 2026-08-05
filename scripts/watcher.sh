@@ -98,10 +98,10 @@ process_files() {
         echo "Processing: $file"
 
         if mv "$file" "$ARCHIVE_FOLDER"; then
-            ((SUCCESS_COUNT++))
+            ((++SUCCESS_COUNT))
             log INFO "Moved $file"
         else
-            ((FAILED_COUNT++))
+            ((++FAILED_COUNT))
             log ERROR "Failed $file"
         fi
     done

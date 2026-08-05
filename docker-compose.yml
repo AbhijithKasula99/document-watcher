@@ -1,0 +1,8 @@
+services:
+  document-watcher:
+    build: .
+
+    volumes:
+      - ./incoming:/app/incoming
+      - ./archive:/app/archive
+      - ./logs:/app/logs

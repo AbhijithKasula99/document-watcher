@@ -11,4 +11,4 @@ COPY . .
 RUN chmod +x scripts/watcher.sh
 
 # Default command
-CMD ["./scripts/watcher.sh"]
+CMD ["bash", "-x", "./scripts/watcher.sh"]
