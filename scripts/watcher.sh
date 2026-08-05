@@ -76,7 +76,7 @@ count_files() {
     PDF_COUNT=$(find "$WATCH_FOLDER" -name "*.pdf" | wc -l)
     PNG_COUNT=$(find "$WATCH_FOLDER" -name "*.png" | wc -l)
     TXT_COUNT=$(find "$WATCH_FOLDER" -name "*.txt" | wc -l)
-    FILE_COUNT=$(find "$WATCH_FOLDER" -type f | wc -l)
+    FILE_COUNT=$((PDF_COUNT + PNG_COUNT + TXT_COUNT))
 }
 
 process_files() {
