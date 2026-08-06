@@ -76,7 +76,7 @@ count_files() {
     PDF_COUNT=$(find "$WATCH_FOLDER" -name "*.pdf" | wc -l)
     PNG_COUNT=$(find "$WATCH_FOLDER" -name "*.png" | wc -l)
     TXT_COUNT=$(find "$WATCH_FOLDER" -name "*.txt" | wc -l)
-    FILE_COUNT=$((PDF_COUNT + PNG_COUNT + TXT_COUNT))
+    FILE_COUNT=$(find "$WATCH_FOLDER" -type f | wc -l)
 }
 
 get_file_type() {
@@ -88,10 +88,25 @@ get_file_type() {
     esac
 }
 
+is_supported_document() {
+        TYPE=$(get_file_type "$1")
+                case "$TYPE" in
+                        PDF) return 0;;
+                        PNG) return 0;;
+                        TXT) return 0;;
+                        *)     return 1;;
+                esac
+}
+
+archive_file() {
+	mv "$1" "$ARCHIVE_FOLDER"
+}
+
 process_files() {
 
     SUCCESS_COUNT=0
     FAILED_COUNT=0
+    SKIPPED_COUNT=0
 
     if [ "$FILE_COUNT" -gt 0 ]; then
         log INFO "Watcher started"
@@ -108,11 +123,17 @@ process_files() {
 	TYPE=$(get_file_type "$file")
 	echo "Document type: $TYPE"
 
-        if mv "$file" "$ARCHIVE_FOLDER"; then
+	if ! is_supported_document "$file"; then
+    		echo "Skipping unsupported file: $file"
+    		log WARNING "Unsupported file skipped: $file"
+		((++SKIPPED_COUNT))
+    		continue
+	fi
+
+        if archive_file "$file"; then
             ((++SUCCESS_COUNT))
             log INFO "Moved $file"
         else
-            status=$?
             ((++FAILED_COUNT))
             log ERROR "Failed $file"
         fi
@@ -123,13 +144,17 @@ process_files() {
     # ===================================
 
     log INFO "Run completed."
+    log INFO "Processed: $FILE_COUNT"
     log INFO "Succeeded: $SUCCESS_COUNT"
+    log INFO "Skipped: $SKIPPED_COUNT"
     log INFO "Failed: $FAILED_COUNT"
 
     echo "==================================="
     echo "Processing Summary"
     echo "==================================="
+    echo "Processed : $FILE_COUNT"
     echo "Succeeded : $SUCCESS_COUNT"
+    echo "Skipped   : $SKIPPED_COUNT"
     echo "Failed    : $FAILED_COUNT"
 
     if [ "$FAILED_COUNT" -gt 0 ]; then

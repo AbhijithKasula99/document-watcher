@@ -1,13 +1,11 @@
-get_file_type() {
-    case "$1" in
-        *.pdf) echo "PDF" ;;
-        *.png) echo "PNG" ;;
-        *.txt) echo "TXT" ;;
-        *)     echo "UNKNOWN" ;;
-    esac
+archive_file() {
+    mv "$1" archive/
 }
 
-get_file_type 1.pdf
-get_file_type 2.png
-get_file_type 3.txt
-get_file_type 4.zip
+touch tester.txt
+
+archive_file tester.txt
+
+
+
+
