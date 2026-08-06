@@ -79,6 +79,15 @@ count_files() {
     FILE_COUNT=$((PDF_COUNT + PNG_COUNT + TXT_COUNT))
 }
 
+get_file_type() {
+    case "$1" in
+        *.pdf) echo "PDF" ;;
+        *.png) echo "PNG" ;;
+        *.txt) echo "TXT" ;;
+        *)     echo "UNKNOWN" ;;
+    esac
+}
+
 process_files() {
 
     SUCCESS_COUNT=0
@@ -88,25 +97,16 @@ process_files() {
         log INFO "Watcher started"
         log INFO "Folder verified"
         log INFO "$FILE_COUNT files found"
-
-        # ===========================
-        # TEMP DEBUG
-        # ===========================
-        echo "FILE_COUNT=$FILE_COUNT"
-
     else
         echo "No files in folder"
         return 0
     fi
 
     for file in "$WATCH_FOLDER"/*; do
-
-        # ===========================
-        # TEMP DEBUG
-        # ===========================
-        echo "DEBUG: file='$file'"
-
         echo "Processing: $file"
+
+	TYPE=$(get_file_type "$file")
+	echo "Document type: $TYPE"
 
         if mv "$file" "$ARCHIVE_FOLDER"; then
             ((++SUCCESS_COUNT))
@@ -114,7 +114,6 @@ process_files() {
         else
             status=$?
             ((++FAILED_COUNT))
-            echo "DEBUG: mv failed with exit code $status"
             log ERROR "Failed $file"
         fi
     done
