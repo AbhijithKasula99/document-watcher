@@ -19,8 +19,12 @@ jobs:
       - name: Validate Bash Syntax
         run: bash -n scripts/watcher.sh
 
+      - name: Run Tests
+        run: ./tests/test_watcher.sh
+
       - name: Build Docker Image
         run: docker build -t document-watcher .
 
       - name: Run container
         run: docker run --rm document-watcher
+
