@@ -102,6 +102,12 @@ archive_file() {
 	mv "$1" "$ARCHIVE_FOLDER"
 }
 
+
+discover_files() {
+	find "$1" -type f
+}
+
+
 process_files() {
 
     SUCCESS_COUNT=0
@@ -117,7 +123,7 @@ process_files() {
         return 0
     fi
 
-    for file in "$WATCH_FOLDER"/*; do
+    while read -r file; do
         echo "Processing: $file"
 
 	TYPE=$(get_file_type "$file")
@@ -137,7 +143,7 @@ process_files() {
             ((++FAILED_COUNT))
             log ERROR "Failed $file"
         fi
-    done
+    done < <(discover_files "$WATCH_FOLDER")
 
     # ===================================
     # Processing Summary
