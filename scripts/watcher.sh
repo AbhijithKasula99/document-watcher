@@ -72,6 +72,14 @@ validate_environment() {
     fi
 }
 
+validate_configuration() {
+    if [ -z "$SUPPORTED_TYPES" ]; then
+        echo "ERROR: SUPPORTED_TYPES is not configured."
+        log ERROR "SUPPORTED_TYPES is not configured."
+        exit 4
+    fi
+}
+
 count_files() {
     PDF_COUNT=$(find "$WATCH_FOLDER" -name "*.pdf" | wc -l)
     PNG_COUNT=$(find "$WATCH_FOLDER" -name "*.png" | wc -l)
@@ -89,13 +97,15 @@ get_file_type() {
 }
 
 is_supported_document() {
-        TYPE=$(get_file_type "$1")
-                case "$TYPE" in
-                        PDF) return 0;;
-                        PNG) return 0;;
-                        TXT) return 0;;
-                        *)     return 1;;
-                esac
+    local file="$1"
+    local type
+
+    type=$(get_file_type "$file")
+
+    case ",$SUPPORTED_TYPES," in
+        *,"$type",*) return 0 ;;
+        *)            return 1 ;;
+    esac
 }
 
 archive_file() {
@@ -219,6 +229,7 @@ done
 main() {
     display_header
     validate_environment
+    validate_configuration
     display_runtime_info
     count_files
     display_statistics
