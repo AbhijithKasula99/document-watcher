@@ -6,3 +6,4 @@ services:
       - ./incoming:/app/incoming
       - ./archive:/app/archive
       - ./logs:/app/logs
+      - ./failed:/app/failed

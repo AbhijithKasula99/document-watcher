@@ -12,6 +12,7 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 WATCH_FOLDER="$PROJECT_ROOT/incoming"
 ARCHIVE_FOLDER="$PROJECT_ROOT/archive"
 LOG_FILE="$PROJECT_ROOT/logs/watcher.log"
+FAILED_FOLDER="$PROJECT_ROOT/failed"
 
 # ===================================
 # Configuration
@@ -118,6 +119,11 @@ discover_files() {
 }
 
 
+quarantine_file() {
+    local file="$1"
+    mv "$file" "$FAILED_FOLDER/"
+}
+
 process_files() {
 
     SUCCESS_COUNT=0
@@ -138,6 +144,14 @@ process_files() {
 
 	TYPE=$(get_file_type "$file")
 	echo "Document type: $TYPE"
+
+	if [ "$(basename "$file")" = "fail.pdf" ]; then
+    		echo "Processing failed: $file"
+    		echo "Failure reason: SIMULATED_PROCESSING_ERROR"
+    		FAILED_COUNT=$((FAILED_COUNT + 1))
+		quarantine_file "$file"
+    		continue
+	fi
 
 	if ! is_supported_document "$file"; then
     		echo "Skipping unsupported file: $file"
@@ -236,4 +250,6 @@ main() {
     process_files
 }
 
-main
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+    main
+fi
