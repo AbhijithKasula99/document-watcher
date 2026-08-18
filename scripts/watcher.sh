@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 
 set -euo pipefail
 
@@ -124,6 +124,39 @@ quarantine_file() {
     mv "$file" "$FAILED_FOLDER/"
 }
 
+write_failure_metadata() {
+    local file="$1"
+    local type="$2"
+    local phase="$3"
+    local reason="$4"
+    local timestamp="$5"
+
+    local filename
+    local metadata_file
+
+    filename=$(basename "$file")
+    metadata_file="$FAILED_FOLDER/$filename.meta"
+
+    {
+        echo "FILE=$filename"
+        echo "TYPE=$type"
+        echo "PHASE=$phase"
+        echo "REASON=$reason"
+        echo "TIMESTAMP=$timestamp"
+    } > "$metadata_file"
+}
+
+verify_quarantine() {
+    local quarantined_file="$1"
+    local metadata_file="$2"
+
+    if [ -f "$quarantined_file" ] && [ -f "$metadata_file" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
 process_files() {
 
     SUCCESS_COUNT=0
@@ -149,8 +182,30 @@ process_files() {
     		echo "Processing failed: $file"
     		echo "Failure reason: SIMULATED_PROCESSING_ERROR"
     		FAILED_COUNT=$((FAILED_COUNT + 1))
-		quarantine_file "$file"
-    		continue
+		TIMESTAMP=$(date)
+		filename=$(basename "$file")
+		quarantined_file="$FAILED_FOLDER/$filename"
+		metadata_file="$FAILED_FOLDER/$filename.meta"
+
+	write_failure_metadata \
+    		"$file" \
+    		"$TYPE" \
+    		"PROCESSING" \
+    		"SIMULATED_PROCESSING_ERROR" \
+    		"$TIMESTAMP"
+
+	quarantine_file "$file"
+
+
+	if verify_quarantine "$quarantined_file" "$metadata_file"; then
+    		log INFO "Quarantine verified: $filename"
+	else
+    		log ERROR "Quarantine verification failed: $filename"
+    		echo "ERROR: Quarantine verification failed: $filename"
+	fi
+
+	continue
+
 	fi
 
 	if ! is_supported_document "$file"; then
@@ -167,7 +222,7 @@ process_files() {
             ((++FAILED_COUNT))
             log ERROR "Failed $file"
         fi
-    done < <(discover_files "$WATCH_FOLDER")
+    	done < <(discover_files "$WATCH_FOLDER")
 
     # ===================================
     # Processing Summary
