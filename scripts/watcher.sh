@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 set -euo pipefail
 
@@ -121,7 +121,13 @@ discover_files() {
 
 quarantine_file() {
     local file="$1"
-    mv "$file" "$FAILED_FOLDER/"
+
+    if mv "$file" "$FAILED_FOLDER/"; then
+	return 0
+    else
+	return 1
+    fi
+
 }
 
 write_failure_metadata() {
@@ -162,6 +168,9 @@ process_files() {
     SUCCESS_COUNT=0
     FAILED_COUNT=0
     SKIPPED_COUNT=0
+    QUARANTINE_FAILED_COUNT=0
+    METADATA_FAILED_COUNT=0
+    VERIFICATION_FAILED_COUNT=0
 
     if [ "$FILE_COUNT" -gt 0 ]; then
         log INFO "Watcher started"
@@ -175,45 +184,59 @@ process_files() {
     while read -r file; do
         echo "Processing: $file"
 
-	TYPE=$(get_file_type "$file")
-	echo "Document type: $TYPE"
+        TYPE=$(get_file_type "$file")
+        echo "Document type: $TYPE"
 
-	if [ "$(basename "$file")" = "fail.pdf" ]; then
-    		echo "Processing failed: $file"
-    		echo "Failure reason: SIMULATED_PROCESSING_ERROR"
-    		FAILED_COUNT=$((FAILED_COUNT + 1))
-		TIMESTAMP=$(date)
-		filename=$(basename "$file")
-		quarantined_file="$FAILED_FOLDER/$filename"
-		metadata_file="$FAILED_FOLDER/$filename.meta"
+        if [ "$(basename "$file")" = "fail.pdf" ]; then
+            echo "Processing failed: $file"
+            echo "Failure reason: SIMULATED_PROCESSING_ERROR"
 
-	write_failure_metadata \
-    		"$file" \
-    		"$TYPE" \
-    		"PROCESSING" \
-    		"SIMULATED_PROCESSING_ERROR" \
-    		"$TIMESTAMP"
+            FAILED_COUNT=$((FAILED_COUNT + 1))
+            TIMESTAMP=$(date)
 
-	quarantine_file "$file"
+            filename=$(basename "$file")
+            quarantined_file="$FAILED_FOLDER/$filename"
+            metadata_file="$FAILED_FOLDER/$filename.meta"
 
+            if write_failure_metadata \
+                "$file" \
+                "$TYPE" \
+                "PROCESSING" \
+                "SIMULATED_PROCESSING_ERROR" \
+                "$TIMESTAMP"; then
 
-	if verify_quarantine "$quarantined_file" "$metadata_file"; then
-    		log INFO "Quarantine verified: $filename"
-	else
-    		log ERROR "Quarantine verification failed: $filename"
-    		echo "ERROR: Quarantine verification failed: $filename"
-	fi
+                log INFO "Failure metadata written: $filename"
+            else
+                log ERROR "Failure metadata write failed: $filename"
+                echo "ERROR: Failure metadata write failed: $filename"
+                ((++METADATA_FAILED_COUNT))
+            fi
 
-	continue
+            if quarantine_file "$file"; then
+                log INFO "Quarantine succeeded"
 
-	fi
+                if verify_quarantine "$quarantined_file" "$metadata_file"; then
+                    log INFO "Quarantine verified: $filename"
+                else
+                    log ERROR "Quarantine verification failed: $filename"
+                    echo "ERROR: Quarantine verification failed: $filename"
+                    ((++VERIFICATION_FAILED_COUNT))
+                fi
+            else
+                log ERROR "Quarantine failed"
+                echo "ERROR: Quarantine failed"
+                ((++QUARANTINE_FAILED_COUNT))
+            fi
 
-	if ! is_supported_document "$file"; then
-    		echo "Skipping unsupported file: $file"
-    		log WARNING "Unsupported file skipped: $file"
-		((++SKIPPED_COUNT))
-    		continue
-	fi
+            continue
+        fi
+
+        if ! is_supported_document "$file"; then
+            echo "Skipping unsupported file: $file"
+            log WARNING "Unsupported file skipped: $file"
+            ((++SKIPPED_COUNT))
+            continue
+        fi
 
         if archive_file "$file"; then
             ((++SUCCESS_COUNT))
@@ -222,7 +245,8 @@ process_files() {
             ((++FAILED_COUNT))
             log ERROR "Failed $file"
         fi
-    	done < <(discover_files "$WATCH_FOLDER")
+
+    done < <(discover_files "$WATCH_FOLDER")
 
     # ===================================
     # Processing Summary
@@ -233,6 +257,9 @@ process_files() {
     log INFO "Succeeded: $SUCCESS_COUNT"
     log INFO "Skipped: $SKIPPED_COUNT"
     log INFO "Failed: $FAILED_COUNT"
+    log INFO "Metadata failed: $METADATA_FAILED_COUNT"
+    log INFO "Quarantine failed: $QUARANTINE_FAILED_COUNT"
+    log INFO "Verification failed: $VERIFICATION_FAILED_COUNT"
 
     echo "==================================="
     echo "Processing Summary"
@@ -241,6 +268,9 @@ process_files() {
     echo "Succeeded : $SUCCESS_COUNT"
     echo "Skipped   : $SKIPPED_COUNT"
     echo "Failed    : $FAILED_COUNT"
+    echo "Quarantine Failed   : $QUARANTINE_FAILED_COUNT"
+    echo "Metadata Failed     : $METADATA_FAILED_COUNT"
+    echo "Verification Failed : $VERIFICATION_FAILED_COUNT"
 
     if [ "$FAILED_COUNT" -gt 0 ]; then
         log ERROR "Processing failed"
