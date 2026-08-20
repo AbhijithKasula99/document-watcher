@@ -163,6 +163,68 @@ verify_quarantine() {
     fi
 }
 
+
+handle_processing_failure() {
+    local -n output=$1
+    local file="$2"
+    local type="$3"
+    local phase="$4"
+    local reason="$5"
+
+    local timestamp
+    local filename
+    local quarantined_file
+    local metadata_file
+
+    output[metadata]="NOT_ATTEMPTED"
+    output[quarantine]="NOT_ATTEMPTED"
+    output[verification]="NOT_ATTEMPTED"
+
+    timestamp=$(date)
+    filename=$(basename "$file")
+    quarantined_file="$FAILED_FOLDER/$filename"
+    metadata_file="$FAILED_FOLDER/$filename.meta"
+
+    if write_failure_metadata \
+        "$file" \
+        "$type" \
+        "$phase" \
+        "$reason" \
+        "$timestamp"; then
+
+        output[metadata]="SUCCESS"
+        log INFO "Failure metadata written: $filename"
+    else
+        output[metadata]="FAILED"
+        log ERROR "Failure metadata write failed: $filename"
+        echo "ERROR: Failure metadata write failed: $filename"
+    fi
+
+    if quarantine_file "$file"; then
+        output[quarantine]="SUCCESS"
+        log INFO "Quarantine succeeded: $filename"
+
+        if [ "${output[metadata]}" = "SUCCESS" ]; then
+            if verify_quarantine "$quarantined_file" "$metadata_file"; then
+                output[verification]="SUCCESS"
+                log INFO "Quarantine verified: $filename"
+            else
+                output[verification]="FAILED"
+                log ERROR "Quarantine verification failed: $filename"
+                echo "ERROR: Quarantine verification failed: $filename"
+            fi
+        else
+            output[verification]="NOT_ATTEMPTED"
+            log WARNING "Quarantine verification not attempted: metadata failed: $filename"
+            echo "WARNING: Quarantine verification not attempted: metadata failed"
+        fi
+    else
+        output[quarantine]="FAILED"
+        log ERROR "Quarantine failed: $filename"
+        echo "ERROR: Quarantine failed: $filename"
+    fi
+}
+
 process_files() {
 
     SUCCESS_COUNT=0
@@ -192,40 +254,26 @@ process_files() {
             echo "Failure reason: SIMULATED_PROCESSING_ERROR"
 
             FAILED_COUNT=$((FAILED_COUNT + 1))
-            TIMESTAMP=$(date)
 
-            filename=$(basename "$file")
-            quarantined_file="$FAILED_FOLDER/$filename"
-            metadata_file="$FAILED_FOLDER/$filename.meta"
+            declare -A failure_result
 
-            if write_failure_metadata \
+            handle_processing_failure \
+                failure_result \
                 "$file" \
                 "$TYPE" \
                 "PROCESSING" \
-                "SIMULATED_PROCESSING_ERROR" \
-                "$TIMESTAMP"; then
+                "SIMULATED_PROCESSING_ERROR"
 
-                log INFO "Failure metadata written: $filename"
-            else
-                log ERROR "Failure metadata write failed: $filename"
-                echo "ERROR: Failure metadata write failed: $filename"
+            if [ "${failure_result[metadata]}" = "FAILED" ]; then
                 ((++METADATA_FAILED_COUNT))
             fi
 
-            if quarantine_file "$file"; then
-                log INFO "Quarantine succeeded"
-
-                if verify_quarantine "$quarantined_file" "$metadata_file"; then
-                    log INFO "Quarantine verified: $filename"
-                else
-                    log ERROR "Quarantine verification failed: $filename"
-                    echo "ERROR: Quarantine verification failed: $filename"
-                    ((++VERIFICATION_FAILED_COUNT))
-                fi
-            else
-                log ERROR "Quarantine failed"
-                echo "ERROR: Quarantine failed"
+            if [ "${failure_result[quarantine]}" = "FAILED" ]; then
                 ((++QUARANTINE_FAILED_COUNT))
+            fi
+
+            if [ "${failure_result[verification]}" = "FAILED" ]; then
+                ((++VERIFICATION_FAILED_COUNT))
             fi
 
             continue
