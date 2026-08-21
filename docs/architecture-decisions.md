@@ -32,3 +32,28 @@ Potential storage backends:
 - Local filesystem
 - Amazon S3
 - Other object storage systems
+
+
+## Current Processing Flow
+
+```text
+main()
+  |
+  v
+process_files()
+  |
+  +--> discover_files()
+  |
+  +--> get_file_type()
+  |
+  +--> is_supported_document()
+  |
+  +--> archive_file()
+  |
+  +--> handle_processing_failure()
+          |
+          +--> write_failure_metadata()
+          |
+          +--> quarantine_file()
+          |
+          +--> verify_quarantine()
