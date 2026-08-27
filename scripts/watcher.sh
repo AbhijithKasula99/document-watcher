@@ -9,10 +9,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-WATCH_FOLDER="$PROJECT_ROOT/incoming"
-ARCHIVE_FOLDER="$PROJECT_ROOT/archive"
 LOG_FILE="$PROJECT_ROOT/logs/watcher.log"
-FAILED_FOLDER="$PROJECT_ROOT/failed"
 
 # ===================================
 # Configuration
@@ -74,7 +71,7 @@ validate_environment() {
 }
 
 validate_configuration() {
-    if [ -z "$SUPPORTED_TYPES" ]; then
+    if [ -z "${SUPPORTED_TYPES:-}" ]; then
         echo "ERROR: SUPPORTED_TYPES is not configured."
         log ERROR "SUPPORTED_TYPES is not configured."
         exit 4
