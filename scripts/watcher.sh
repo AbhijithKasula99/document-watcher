@@ -118,13 +118,14 @@ discover_files() {
 
 quarantine_file() {
     local file="$1"
+    local error_message
 
-    if mv "$file" "$FAILED_FOLDER/"; then
-	return 0
-    else
-	return 1
-    fi
+    error_message=$(mv "$file" "$FAILED_FOLDER/" 2>&1) || {
+        log ERROR "Quarantine failed: $file: $error_message"
+        return 1
+    }
 
+    return 0
 }
 
 write_failure_metadata() {
